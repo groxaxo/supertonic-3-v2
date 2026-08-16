@@ -1,42 +1,59 @@
-# Supertonic-3 FP16 v2
+# Supertonic-3 FP16 v2 Model Bundle
 
-Supertonic-3 TTS ONNX runtime package — FP16 precision, CPU-optimized.
+An FP16 ONNX model bundle for Supertonic-3 text-to-speech inference. The
+artifacts are optimized for CPU-friendly ONNX Runtime use and include ten
+precomputed voice styles.
+
+This repository contains model files and configuration only. The Python
+`SupertonicTTSV3` wrapper referenced in older examples is not included here;
+use a compatible external inference wrapper or add one to this repository
+before treating it as a standalone package.
 
 ## Contents
 
-```
+```text
 onnx/
-  vocoder.onnx            50.8 MB  (FP16)
-  vector_estimator.onnx  128.5 MB  (FP16)
-  text_encoder.onnx       18.6 MB  (FP16)
-  duration_predictor.onnx  3.7 MB  (FP32)
-  tts.json                         (config)
-  unicode_indexer.json             (text processor)
+  vocoder.onnx
+  vector_estimator.onnx
+  text_encoder.onnx
+  duration_predictor.onnx
+  tts.json
+  unicode_indexer.json
 voice_styles/
-  F1–F5.json, M1–M5.json          (10 voices)
+  F1.json ... F5.json
+  M1.json ... M5.json
 ```
 
-**Total:** 201.6 MB (models only) / ~196 MB (full package)
+The model files are approximately 201.6 MB in total. Audio output is configured
+for 44.1 kHz in the published inference examples.
 
-## Usage
+## Model details
+
+- Vocoder, vector estimator, and text encoder: FP16
+- Duration predictor: FP32
+- Voice styles: five female and five male style embeddings
+- Intended runtime: ONNX Runtime `>=1.20`
+- Common wrapper dependencies: `numpy` and `transformers`
+
+Static INT8 conversion was attempted for the vocoder and vector estimator but
+did not pass quality validation, so this bundle remains the FP16 v2 baseline.
+
+## Example wrapper shape
+
+When using a compatible external wrapper, the expected call shape is:
 
 ```python
 from helper import SupertonicTTSV3
 
 model = SupertonicTTSV3("path/to/supertonic-3-fp16-v2", use_gpu=False)
-
 wav, duration = model("Hello world.", "en", "F1", total_step=8)
-# wav: (1, samples) float32 numpy array at 44100 Hz
 ```
 
-## Dependencies
+The example assumes that `helper.py` is supplied by the wrapper project. It is
+not an executable command from this repository as currently checked out.
 
-- onnxruntime >= 1.20
-- transformers (tokenizer only)
-- numpy
+## Artifact and license notes
 
-## Precision
-
-All models are FP16 except `duration_predictor` (FP32, too small to benefit).
-INT8 static quantization was attempted for the vocoder and vector estimator but
-failed quality validation — this package remains at the FP16 v2 baseline.
+Keep the ONNX weights and voice-style JSON files together; the configuration
+references the matching model layout. Check the upstream model license and
+redistribution terms before publishing a derived package or hosted endpoint.
